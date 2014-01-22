@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:aop="http://www.springframework.org/schema/aop"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:lang="http://www.springframework.org/schema/lang" xmlns:util="http://www.springframework.org/schema/util"
+	xmlns:p="http://www.springframework.org/schema/p" xmlns:tx="http://www.springframework.org/schema/tx"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.5.xsd
+       http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-2.5.xsd
+       http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-2.5.xsd
+       http://www.springframework.org/schema/lang http://www.springframework.org/schema/lang/spring-lang-2.5.xsd
+       http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-2.5.xsd
+       http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-2.5.xsd">
+
+    <bean id="commonService" class="com.sktelecom.ssm.broker.service.impl.CommonServiceImpl"/>
+    
+	<bean id="messageSource"
+		class="org.springframework.context.support.ResourceBundleMessageSource">
+		<property name="basenames">
+			<list>
+				<value>com/sktelecom/ssm/broker/properties/brokerInfo</value>
+			</list>
+		</property>
+	</bean>
+
+	<bean id="msAcc"
+		class="org.springframework.context.support.MessageSourceAccessor">
+		<constructor-arg ref="messageSource" />
+	</bean> 
+    
+	<bean id="messageRetryScheduler" class="org.springframework.scheduling.quartz.JobDetailBean">
+		<property name="jobClass" value="com.sktelecom.ssm.broker.util.MsgRetryScheduler" />
+<!-- 		<property name="applicationContextJobDataKey" value="applicationContext" /> -->
+		<property name="jobDataAsMap">
+            <map>
+                <entry key="commonServiceImpl" value-ref="commonService"/>
+                <entry key="msAcc" value-ref="msAcc"/>
+            </map>
+        </property>
+	</bean>
+	
+	<bean id="gatewayControl" class="com.sktelecom.ssm.broker.control.GatewayControl"/>
+	<bean id="senderControl" class="com.sktelecom.ssm.broker.control.SenderControl"/>
+	<bean id="mqttsClientCheckScheduler" class="org.springframework.scheduling.quartz.JobDetailBean">
+	    <property name="jobClass" value="com.sktelecom.ssm.broker.util.MqttsClientCheckScheduler" />
+	</bean>
+
+	<bean id="messageRetrySchedulerTrigger" class="org.springframework.scheduling.quartz.CronTriggerBean">
+		<property name="jobDetail" ref="messageRetryScheduler" />
+		<!-- value 값을 프로퍼티로 빼보기 -->
+		<property name="cronExpression" value="0/30 * * * * ?" />
+<!-- 		<property name="cronExpression" value="* 50 * * * ?" /> -->
+	</bean>
+	<bean id="mqttsClientCheckTrigger" class="org.springframework.scheduling.quartz.CronTriggerBean">
+		<property name="jobDetail" ref="mqttsClientCheckScheduler" />
+<!-- 		<property name="cronExpression" value="0 30 * * * ?" /> -->
+		<property name="cronExpression" value="0/10 * * * * ?" />
+	</bean>
+	<bean class="org.springframework.scheduling.quartz.SchedulerFactoryBean">
+		<property name="triggers">
+			<list>
+				<ref bean="messageRetrySchedulerTrigger" />
+				<ref bean="mqttsClientCheckTrigger" />
+			</list>
+		</property>
+	</bean>
+</beans>

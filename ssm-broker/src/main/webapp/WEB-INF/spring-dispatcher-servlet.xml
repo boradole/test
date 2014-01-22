@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:context="http://www.springframework.org/schema/context" xmlns:p="http://www.springframework.org/schema/p"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans
+       http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+       http://www.springframework.org/schema/context
+       http://www.springframework.org/schema/context/spring-context-3.0.xsd">
+
+
+	<!-- base-package로 부터 스캔을 할 때, spring mvc에 관련된 Controller 타입만 스캔 한다. 기본 
+		필터의 사용을 false로 지정하면 @Component, @Repository, @Service, @Controller 어노테이션을 
+		사용하는 클래스를 bean으로 인식하지 않는다. -->
+	<context:component-scan base-package="com.sktelecom.ssm.broker"
+		use-default-filters="false">
+		<context:include-filter type="annotation"
+			expression="org.springframework.stereotype.Controller" />
+	</context:component-scan>
+
+
+	<!-- 컨트롤러 처리결과를 보여줄 View 구현체 -->
+	<bean id="viewResolver"
+		class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+		<!-- /WEB-INF/view/뷰이름.jsp 로 들어오도록 prefix 및 suffix 설정 -->
+		<property name="prefix">
+			<value>/WEB-INF/jsp/</value>
+		</property>
+		<property name="suffix">
+			<value>.jsp</value>
+		</property>
+	</bean>
+	
+	<bean id="annotationHandlerMapping" class="org.springframework.web.servlet.mvc.annotation.DefaultAnnotationHandlerMapping">
+		<property name="order" value="1" />
+		<property name="interceptors">
+        <list>
+            <ref bean="logHandlerInterceptor" />
+            <ref bean="paramCheckInterceptor" />
+        </list>
+    	</property>
+	</bean>
+</beans>

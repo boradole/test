@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:aop="http://www.springframework.org/schema/aop"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:lang="http://www.springframework.org/schema/lang" xmlns:util="http://www.springframework.org/schema/util"
+	xmlns:p="http://www.springframework.org/schema/p" xmlns:tx="http://www.springframework.org/schema/tx"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.5.xsd
+       http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-2.5.xsd
+       http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-2.5.xsd
+       http://www.springframework.org/schema/lang http://www.springframework.org/schema/lang/spring-lang-2.5.xsd
+       http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-2.5.xsd
+       http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-2.5.xsd">
+
+
+	<!-- 어노테이션이 적용된 class( @Controller, @Service, @Repository 를 포함한 class )를 
+		로딩 base-package로 부터 스캔을 할 때 Controller 타입은 제외 시킨다. 제외 시키는 이유는 spring mvc에 
+		관련된 설정 파일은 dispatcher-servlet.xml 에서 스캔 하기 때문이다. -->
+	<context:component-scan base-package="com.sktelecom.ssm.broker">
+		<context:exclude-filter type="annotation" expression="org.springframework.stereotype.Controller" />
+	</context:component-scan>
+	<bean class="ch.qos.logback.ext.spring.ApplicationContextHolder"/>
+	
+	<!-- 외부 프로퍼티 설정 -->
+	<bean class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer" id="propertyConfigurer">
+		<property name="locations">
+			<list>
+				<value>classpath:/com/sktelecom/ssm/broker/properties/jdbc.properties</value>
+				<value>classpath:/com/sktelecom/ssm/broker/properties/brokerInfo.properties</value>
+			</list>
+		</property>
+	</bean>
+
+
+	<!-- DBCP 컨넥션 풀 설정 -->
+	<bean id="dataSource1" class="org.apache.commons.dbcp.BasicDataSource" destroy-method="close" depends-on="propertyConfigurer">
+		<property name="driverClassName" value="${jdbc1.driverClassName}" />
+		<property name="url" value="${jdbc1.url}" />
+		<property name="username" value="${jdbc1.username}" />
+		<property name="password" value="${jdbc1.password}" />
+		<property name="initialSize" value="${jdbc1.initialSize}" />
+		<property name="maxIdle" value="${jdbc1.maxIdle}" />
+		<property name="maxActive" value="${jdbc1.maxActive}" />
+		<property name="maxWait" value="${jdbc1.maxWait}" />
+		<property name="testOnBorrow" value="${jdbc1.testOnBorrow}" />
+		<property name="validationQuery" value="${jdbc1.validationQuery}" />
+	</bean>
+
+
+	<!-- Hibernate Session Factory 설정 -->
+	<bean id="sessionFactory" class="org.springframework.orm.hibernate4.LocalSessionFactoryBean"> 
+	    <!-- This is the usual way to set up a shared Hibernate SessionFactory in a Spring application context -->
+		<property name="dataSource">
+			<ref bean="dataSource1" />
+		</property>
+		<property name="mappingLocations">
+			<list>
+				<value> classpath:/com/sktelecom/ssm/broker/config/device.hbm.xml
+				</value>
+				<value> classpath:/com/sktelecom/ssm/broker/config/gateway.hbm.xml
+				</value>
+			</list>
+		</property>
+		<property name="annotatedClasses">
+			<list>
+				<value>com.sktelecom.ssm.broker.entity.DeviceEntity</value>
+				<value>com.sktelecom.ssm.broker.entity.GatewayEntity</value>
+				<value>com.sktelecom.ssm.broker.entity.BrokerEntity</value>
+				<value>com.sktelecom.ssm.broker.entity.MessageEntity</value>
+				<value>com.sktelecom.ssm.broker.entity.DeviceMessageEntity</value>
+				<value>com.sktelecom.ssm.broker.entity.DeviceMsgSucEntity</value>
+				<value>com.sktelecom.ssm.broker.entity.DeviceMsgFailEntity</value>
+			</list>
+		</property>
+		<property name="hibernateProperties">
+			<props>
+			    <!-- dialect : Hibernate가 어떤 SQL 구문을 생성해서 DB와 상호작용할지 알려줌 -->
+				<prop key="hibernate.dialect">org.hibernate.dialect.MySQL5Dialect</prop> 
+				<prop key="hibernate.show_sql">true</prop>
+				<prop key="hibernate.format_sql">true</prop>
+			<!-- <prop key="hibernate.cache.use_query_cache">true</prop>
+				<prop key="hibernate.cache.provider_class">org.hibernate.cache.EhCacheProvider</prop>
+				<prop key="hibernate.cache.region.factory_class">org.hibernate.cache.ehcache.EhCacheRegionFactory</prop>
+			 	<prop key="hibernate.cache.configurationResourceName">com/incross/ssm/broker/config/ehcache.xml</prop> 
+				<prop key="hibernate.cache.provider_configuration_file_resource_path">/com/incross/ssm/broker/config/ehcache.xml</prop>-->
+			</props>
+		</property>
+	</bean>
+
+	<tx:annotation-driven transaction-manager="transactionManager" />
+	<bean id="transactionManager" class="org.springframework.orm.hibernate4.HibernateTransactionManager">
+	    	<property name="sessionFactory" ref="sessionFactory" />
+	</bean>
+
+	<!-- jsonView 설정 -->
+	<bean id="jsonView" class="net.sf.json.spring.web.servlet.view.JsonView" />
+	<bean id="beanNameResolver" class="org.springframework.web.servlet.view.BeanNameViewResolver" p:order="0" />
+
+	<!-- brokerInfo.proerties 에서 인증 모드 ,비인증 모드 선택 -->
+	<bean id="connect" class="${CONNECT.SERVICE}">
+	</bean>
+		
+	<bean id="loggingAspect" class="com.sktelecom.ssm.util.LoggingAop" />
+	<aop:config>
+		<aop:aspect ref="loggingAspect">
+			<aop:pointcut id="loggingPointCut" expression="execution(public * com.sktelecom.ssm.broker.util.*HandlerInterceptor.*(..))" />
+			<aop:pointcut expression="execution(public * com.sktelecom.ssm.broker.dao.*Dao.*(..))" id="daoPublicMethod" />
+			<aop:pointcut expression="execution(public * com.sktelecom.ssm.broker.service.*Service.*(..))" id="servicePublicMethod" />
+			<aop:pointcut expression="execution(public * com.sktelecom.ssm.broker.control.*Control.*(..))" id="controlPublicMethod" />
+			<aop:around method="aroundAdvice" pointcut-ref="servicePublicMethod" />
+			<aop:around method="aroundAdvice" pointcut-ref="controlPublicMethod" />
+			<aop:around method="aroundAdvice" pointcut-ref="daoPublicMethod" />
+			<aop:around method="aroundAdvice" pointcut-ref="loggingPointCut" />
+		</aop:aspect>
+	</aop:config>
+
+
+</beans>

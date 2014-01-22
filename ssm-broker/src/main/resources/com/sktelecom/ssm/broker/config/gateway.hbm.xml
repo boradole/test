@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+    <!DOCTYPE hibernate-mapping PUBLIC
+        "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
+        "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd" >
+
+<hibernate-mapping>
+
+	<!-- <query name="batchUpdate"> -->
+	<!-- <![CDATA[UPDATE DeviceDomain SET gwId = :gwId ,upTm = :upTm WHERE mac 
+		= :mac]]> -->
+	<!-- </query> -->
+
+	<query name="gateway.selectGatewayInfo">
+		FROM 
+			GatewayEntity 
+		WHERE 
+			gwIp= :gwIp 
+		AND 
+			gwPort = :gwPort
+	</query>
+</hibernate-mapping>

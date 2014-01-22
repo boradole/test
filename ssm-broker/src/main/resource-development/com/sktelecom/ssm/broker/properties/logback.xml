@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    
+    <property name="pattern" value="%d{yy.MM.dd HH:mm:ss.SSS}[%X{sessionId}] [%-5level] [%logger{0}:%L] %msg%n"/>
+    <property name="dateFormat" value="%d{yyyy-MM-dd}"/>
+    <property name="dirPath" value="/svc/ssm/app/ssm-broker/logs/"/>
+    
+<!-- 	<appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender"> -->
+<!-- 		<encoder> -->
+<!-- 			<pattern>%d{yy.MM.dd HH:mm:ss.SSS}[%X{sessionId}] [%-5level] [%logger{0}:%L] %msg%n</pattern> -->
+<!-- 		</encoder> -->
+<!-- 	</appender> -->
+	
+	<appender name="FILEOUT_DEBUG" class="ch.qos.logback.core.rolling.RollingFileAppender">
+	    <file>${dirPath}/debug/ssm-broker-debug.log</file>
+		<maxHistory>30</maxHistory>
+		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+		   <fileNamePattern>${dirPath}ssm-broker-debug.log.${dateFormat}</fileNamePattern>
+			<maxHistory>30</maxHistory>
+		</rollingPolicy>
+		<encoder>
+			<pattern>${pattern}</pattern>
+		</encoder>
+		<filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+			<level>DEBUG</level>
+		</filter>
+	</appender>
+	
+	<appender name="FILEOUT_INFO" class="ch.qos.logback.core.rolling.RollingFileAppender">
+	    <file>${dirPath}/info/ssm-broker-info.log</file>
+		<maxHistory>30</maxHistory>
+		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+		    <fileNamePattern>${dirPath}ssm-broker-info.log.${dateFormat}</fileNamePattern>
+			<maxHistory>30</maxHistory>
+		</rollingPolicy>
+		<encoder>
+			<pattern>${pattern}</pattern>
+		</encoder>
+		<filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+			<level>INFO</level>
+		</filter>
+	</appender>
+	
+	<appender name="FILEOUT_ERROR" class="ch.qos.logback.core.rolling.RollingFileAppender">
+	    <file>${dirPath}/error/ssm-broker-error.log</file>
+		<maxHistory>30</maxHistory>
+		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+		     <fileNamePattern>${dirPath}ssm-broker-error.log.${dateFormat}</fileNamePattern>
+			<maxHistory>30</maxHistory>
+		</rollingPolicy>
+		<encoder>
+			<pattern>${pattern}</pattern>
+		</encoder>
+		<filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+			<level>ERROR</level>
+		</filter>
+	</appender>
+	
+	<!-- Hibernate Loggers -->
+	<logger name="org.hibernate" additivity="false">
+        <level value="debug"/>
+         <appender-ref ref="FILEOUT_DEBUG" />
+    </logger>
+    <logger name="java.sql.Connection" additivity="false">
+        <level value="debug"/>
+        <appender-ref ref="FILEOUT_DEBUG" />
+        </logger>
+  	<logger name="java.sql.ResultSet"  additivity="false">
+  	    <level value="debug"/>
+  	    <appender-ref ref="FILEOUT_DEBUG" />
+	</logger>
+  	<logger name="java.sql.Statement"  additivity="false" >
+  	    <level value="debug"/>
+  	    <appender-ref ref="FILEOUT_DEBUG" />
+  	</logger>
+  	<logger name="java.sql.PreparedStatement"  additivity="false">
+  	    <level value="debug"/>
+  	    <appender-ref ref="FILEOUT_DEBUG" />
+	</logger>
+	
+  	<root>
+  		<appender-ref ref="FILEOUT_INFO" />
+	  	<appender-ref ref="FILEOUT_DEBUG" />
+	  	<appender-ref ref="FILEOUT_ERROR" />
+	</root>
+</configuration>

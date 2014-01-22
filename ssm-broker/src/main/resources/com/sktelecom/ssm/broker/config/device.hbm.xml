@@ -1,0 +1,109 @@
+<?xml version="1.0"?>
+    <!DOCTYPE hibernate-mapping PUBLIC
+        "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
+        "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd" >
+
+<hibernate-mapping>
+
+	<!-- com.incross.ssm.broker.dao.impl.DeviceImpl -->
+	<query name="device.selectDevice">
+		FROM 
+			DeviceEntity 
+		WHERE 
+			MAC=:searchMac
+	</query>
+	<query name="device.selectDeviceId">
+		FROM 
+			DeviceEntity 
+		WHERE 
+<!-- 			SERVICE_ID=:searchServiceId -->
+			MAC =:searchMac
+	</query>
+	<query name="device.updateDevice">
+		UPDATE 
+			DeviceEntity
+		SET 
+			gwId = :gwId, 
+		    upTm = :upTm
+		WHERE 
+			mac = :mac
+	</query>
+	<query name="device.deleteDevice">
+	    DELETE FROM 
+	    	DeviceEntity
+    	WHERE 
+    		mac= :mac
+	</query>
+	<query name="device.selectPushMessageList">
+	    SELECT
+	    	deviceMessageEntity
+		FROM 
+			DeviceMessageEntity deviceMessageEntity join fetch
+			deviceMessageEntity.deviceEntity
+		WHERE 
+			deviceMessageEntity.msgId = :searchMsgId			
+	</query> 
+	<query name="device.deleteDeviceMsg">
+	     DELETE FROM 
+	    	DeviceMessageEntity 
+    	WHERE 
+    		msgId= :msgId
+	</query>
+	<query name="device.insertDeviceMsgFail">
+	    INSERT INTO
+	    	DeviceMsgFailEntity 
+	    	(msgId,
+	    	 deviceId,
+	    	 jobId,
+	    	 deliveryStat,
+	    	 retryCnt,
+	    	 deliveryTm,
+	    	 regTm
+	    	 )
+	    SELECT
+	    	deviceMessageEntity.msgId,
+	    	deviceMessageEntity.deviceId,
+	    	deviceMessageEntity.jobId,
+	    	deviceMessageEntity.deliveryStat,
+	    	deviceMessageEntity.retryCnt,
+	    	deviceMessageEntity.deliveryTm,
+	    	deviceMessageEntity.regTm
+   		FROM 
+    		DeviceMessageEntity deviceMessageEntity
+   		WHERE
+   		deviceMessageEntity.retryCnt >= :retryCnt
+	</query>
+	<query name="device.deleteDeviceMsgOverCnt">
+	      DELETE FROM 
+	    	DeviceMessageEntity  
+    	WHERE 
+    		retryCnt >= :retryCnt
+	</query>
+	<query name="device.selectPushMessageListOverTime">
+	     SELECT
+	    	deviceMessageEntity
+		FROM 
+			DeviceMessageEntity deviceMessageEntity join fetch
+			deviceMessageEntity.deviceEntity
+<!-- 		WHERE deviceMessageDomain.regTm <![CDATA[<=]]> :now  -->
+		WHERE (:now - deviceMessageEntity.regTm)  > 1000000 <!-- 등록 시간이 1시간 지난 MSG 조회 -->
+		ORDER BY deviceMessageEntity.regTm DESC
+	</query>
+	<query name="device.updateDeviceMsgRetryCnt">
+	   UPDATE 
+			DeviceMessageEntity 
+		SET 
+			retryCnt = :retryCnt 
+		WHERE 
+			msgId = :msgId
+		AND deviceId = :deviceId
+	</query>
+	<query name="device.selectDeviceMessage">
+	    SELECT 
+	    	msg
+	    FROM
+			MessageEntity
+		WHERE
+			msgId = :msgId	    	
+	</query>
+</hibernate-mapping>
